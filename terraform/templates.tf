@@ -1,9 +1,5 @@
-data "vsphere_virtual_machine" "ubuntu" {
-  name          = "ubuntu"
-  datacenter_id = data.vsphere_datacenter.datacenter.id
-}
-
-data "vsphere_virtual_machine" "rocky" {
-  name          = "rocky"
+data "vsphere_virtual_machine" "template" {
+  for_each = var.templates
+  name          = each.value
   datacenter_id = data.vsphere_datacenter.datacenter.id
 }
