@@ -1,8 +1,8 @@
 resource "vsphere_virtual_machine" "virtual_machine" {
   for_each = var.machines
 
-  resource_pool_id = data.vsphere_resource_pool.pool[index(tolist(var.resource_pool), each.value.resource_pool)].id
-  datastore_id     = data.vsphere_datastore.datastore[index(tolist(var.datastore), each.value.datastore)].id
+  resource_pool_id = data.vsphere_resource_pool.pool[each.value.resource_pool].id
+  datastore_id     = data.vsphere_datastore.datastore[each.value.datastore)].id
 
   name     = each.key
   folder   = each.value.folder
@@ -10,9 +10,9 @@ resource "vsphere_virtual_machine" "virtual_machine" {
   memory   = each.value.memory
 
   dynamic "network_interface" {
-    for_each = { for value in var.machines.network : index(tolist(each.value.network), value) => value }
+    for_each = each.value.network
     content {
-      network_id = data.vsphere_network.network[each.key].id
+      network_id = data.vsphere_network.network[each.value.network.value].id
     }
   }
 
@@ -30,7 +30,7 @@ resource "vsphere_virtual_machine" "virtual_machine" {
   }
 
   clone {
-    template_uuid = data.vsphere_virtual_machine.template[index(tolist(var.templates), each.value.template.template_name)].id
+    template_uuid = data.vsphere_virtual_machine.template[each.value.template.template_name].id
     customize {
       dynamic "network_interface" {
         for_each = each.value.template.network_interface
