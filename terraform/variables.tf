@@ -35,21 +35,21 @@ variable "network" {
 }
 
 variable "templates" {
-  type = set(string)
+  type        = set(string)
   description = "Set of the template names, use if any template will be used to create a virtual machine."
-  default = null
+  default     = null
 }
 
 variable "machines" {
   type = map(object({
     // Machine resources
     resource_pool = string
-    datastore = string
-    network = set(string)
-    folder  = string
+    datastore     = string
+    network       = set(string)
+    folder        = string
 
-    cpu      = number
-    memory   = number
+    cpu    = number
+    memory = number
 
     disk = set(object({
       label = string
@@ -58,7 +58,7 @@ variable "machines" {
 
     iso = optional(object({
       datastore = string
-      path = string
+      path      = string
     }))
 
     template = optional(object({
