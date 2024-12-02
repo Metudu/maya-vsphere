@@ -2,7 +2,7 @@ resource "vsphere_virtual_machine" "virtual_machine" {
   for_each = var.machines
 
   resource_pool_id = data.vsphere_resource_pool.pool[each.value.resource_pool].id
-  datastore_id     = data.vsphere_datastore.datastore[each.value.datastore)].id
+  datastore_id     = data.vsphere_datastore.datastore[each.value.datastore].id
 
   name     = each.key
   folder   = each.value.folder
@@ -12,39 +12,45 @@ resource "vsphere_virtual_machine" "virtual_machine" {
   dynamic "network_interface" {
     for_each = each.value.network
     content {
-      network_id = data.vsphere_network.network[each.value.network.value].id
+      network_id = data.vsphere_network.network[network.value].id
     }
   }
 
   dynamic "disk" {
-    for_each = var.machines.disk
+    for_each = each.value.disk
     content {
-      label = each.value.label
-      size  = each.value.size
+      label = disk.value.label
+      size  = disk.value.size
     }
   }
 
-  cdrom {
-    datastore_id = each.value.iso.datastore
-    path         = each.value.iso.path
+  dynamic "cdrom" {
+    for_each = each.value.iso != null ? [1] : []
+    content {
+      datastore_id = iso.value.datastore
+      path         = iso.value.path
+    }
   }
 
-  clone {
-    template_uuid = data.vsphere_virtual_machine.template[each.value.template.template_name].id
-    customize {
-      dynamic "network_interface" {
-        for_each = each.value.template.network_interface
-        content {
-          ipv4_address = each.value.ipv4_address
-          ipv4_netmask = each.value.ipv4_netmask
+  dynamic "clone" {
+    for_each = each.value.template != null ? [1] : []
+    content {
+      template_uuid = data.vsphere_virtual_machine.template[template.value.template_name].id
+      customize {
+        dynamic "network_interface" {
+          for_each = template.value.network_interface
+          content {
+            ipv4_address = network_interface.value.ipv4_address
+            ipv4_netmask = network_interface.value.ipv4_netmask
+          }
         }
-      }
-      ipv4_gateway    = each.value.template.ipv4_gateway
-      dns_server_list = each.value.template.dns_server_list
+        ipv4_gateway    = template.value.ipv4_gateway
+        dns_server_list = template.value.dns_server_list
 
-      linux_options {
-        host_name = each.value.template.host_name
-        domain    = each.value.template.domain
+        linux_options {
+          host_name = template.value.host_name
+          domain    = template.value.domain
+        }
       }
     }
   }
