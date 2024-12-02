@@ -8,11 +8,12 @@ resource "vsphere_virtual_machine" "virtual_machine" {
   folder   = each.value.folder
   num_cpus = each.value.cpu
   memory   = each.value.memory
+  guest_id = lookup(each.value, "template", null) != null ? data.vsphere_virtual_machine.template[lookup(each.value.template, "template_name", null)].guest_id : null
 
   dynamic "network_interface" {
     for_each = each.value.network
     content {
-      network_id = data.vsphere_network.network[network.value].id
+      network_id = data.vsphere_network.network[network_interface.value].id
     }
   }
 
@@ -21,35 +22,36 @@ resource "vsphere_virtual_machine" "virtual_machine" {
     content {
       label = disk.value.label
       size  = disk.value.size
+      unit_number = index(tolist(each.value.disk, disk.value))
     }
   }
 
   dynamic "cdrom" {
     for_each = each.value.iso != null ? [1] : []
     content {
-      datastore_id = iso.value.datastore
-      path         = iso.value.path
+      datastore_id = lookup(disk, "datastore", null)
+      path         = lookup(disk, "path", null)
     }
   }
 
   dynamic "clone" {
-    for_each = each.value.template != null ? [1] : []
+    for_each = lookup(each.value, "template", null)[*]
     content {
-      template_uuid = data.vsphere_virtual_machine.template[template.value.template_name].id
+      template_uuid = data.vsphere_virtual_machine.template[clone.value.template_name].id
       customize {
         dynamic "network_interface" {
-          for_each = template.value.network_interface
+          for_each = clone.value.network_interface
           content {
             ipv4_address = network_interface.value.ipv4_address
             ipv4_netmask = network_interface.value.ipv4_netmask
           }
         }
-        ipv4_gateway    = template.value.ipv4_gateway
-        dns_server_list = template.value.dns_server_list
+        ipv4_gateway    = clone.value.ipv4_gateway
+        dns_server_list = clone.value.dns_server_list
 
         linux_options {
-          host_name = template.value.host_name
-          domain    = template.value.domain
+          host_name = clone.value.host_name
+          domain    = clone.value.domain
         }
       }
     }
