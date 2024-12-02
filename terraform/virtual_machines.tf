@@ -22,15 +22,15 @@ resource "vsphere_virtual_machine" "virtual_machine" {
     content {
       label = disk.value.label
       size  = disk.value.size
-      unit_number = index(tolist(each.value.disk, disk.value))
+      unit_number = index(tolist(each.value.disk), disk.value)
     }
   }
 
   dynamic "cdrom" {
     for_each = each.value.iso != null ? [1] : []
     content {
-      datastore_id = lookup(disk, "datastore", null)
-      path         = lookup(disk, "path", null)
+      datastore_id = lookup(cdrom, "datastore", null)
+      path         = lookup(cdrom, "path", null)
     }
   }
 
